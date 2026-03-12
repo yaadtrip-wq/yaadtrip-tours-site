@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Your Booking - Yaadtrip Tours</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-page="tracking">
+
+  <div class="tracking-page-wrapper">
+    <h1>Track Your Booking</h1>
+    <p>Enter your tracking code to see current status</p>
+
+    <div class="tracking-form">
+      <input type="text" id="tracking-input" placeholder="e.g. YTD-20260302-5678">
+      <button onclick="trackBooking()">Track Now</button>
+    </div>
+
+    <div id="status" style="display: none;">
+      <h2 id="status-title">Booking Status</h2>
+      <p id="status-message"></p>
+
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="tracking-progress-bar"></div>
+      </div>
+
+      <!-- Single status display box – replaces content when status changes -->
+      <div class="status-box" id="current-status">
+        <h4 id="status-label">Booking Received</h4>
+        <p id="status-desc">Awaiting confirmation</p>
+      </div>
+
+      <!-- Booking Details -->
+      <div class="booking-details" id="booking-details" style="display: none;">
+        <h3>Booking Details</h3>
+        <dl>
+          <dt>Tracking Code</dt><dd id="detail-code">—</dd>
+          <dt>Pickup</dt><dd id="detail-pickup">—</dd>
+          <dt>Drop-off</dt><dd id="detail-dropoff">—</dd>
+          <dt>Date & Time</dt><dd id="detail-datetime">—</dd>
+          <dt>Persons</dt><dd id="detail-passengers">—</dd>
+          <dt>Vehicle</dt><dd id="detail-vehicle">—</dd>
+          <dt>Name</dt><dd id="detail-name">—</dd>
+          <dt>Email</dt><dd id="detail-email">—</dd>
+          <dt>Contact</dt><dd id="detail-contact">—</dd>
+          <dt>Details</dt><dd id="detail-details">—</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://pvbdoecrqwthalqqfqnh.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_MdqPiFAIUfPJGn9_a1hpjA_O03v6gt4';
+
+    async function trackBooking() {
+      const code = document.getElementById('tracking-input').value.trim().toUpperCase();
+      if (!code) return alert('Enter your tracking code');
+
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/bookings?tracking_code=eq.${code}&select=*`,
+          {
+            method: 'GET',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+          }
+        );
+
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+
+        const data = await res.json();
+        const booking = data[0];
+
+        const statusDiv = document.getElementById('status');
+        statusDiv.style.display = 'block';
+
+        if (!booking) {
+          document.getElementById('status-title').textContent = 'Not Found';
+          document.getElementById('status-message').textContent = 'No booking found with that code.';
+          document.getElementById('tracking-progress-bar').style.width = '0%';
+          document.getElementById('current-status').style.display = 'none';
+          document.getElementById('booking-details').style.display = 'none';
+          return;
+        }
+
+        // Map status to display values
+        let percent = 25;
+        let label = '1. Booking Received';
+        let desc = 'Awaiting confirmation';
+
+        if (booking.status === 'driver_assigned') {
+          percent = 50;
+          label = '2. Driver Assigned';
+          desc = 'Preparing for pickup';
+        } else if (booking.status === 'on_the_way') {
+          percent = 75;
+          label = '3. On the Way';
+          desc = 'Driver en route';
+        } else if (booking.status === 'completed') {
+          percent = 100;
+          label = '4. Completed';
+          desc = 'Thank you for riding with Yaadtrip Tours!';
+        }
+
+        // Update single status box (replaces previous content)
+        document.getElementById('status-label').textContent = label;
+        document.getElementById('status-desc').textContent = desc;
+        document.getElementById('tracking-progress-bar').style.width = percent + '%';
+
+        // Fill details
+        document.getElementById('detail-pickup').textContent = booking.pickup || 'N/A';
+        document.getElementById('detail-dropoff').textContent = booking.dropoff || 'N/A';
+        document.getElementById('detail-datetime').textContent = booking.datetime 
+          ? new Date(booking.datetime).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) 
+          : 'N/A';
+        document.getElementById('detail-code').textContent = booking.tracking_code || 'N/A';
+        document.getElementById('detail-passengers').textContent = booking.passengers || 'N/A';
+        document.getElementById('detail-vehicle').textContent = booking.vehicle || 'N/A';
+        document.getElementById('detail-name').textContent = booking.name || 'N/A';
+        document.getElementById('detail-email').textContent = booking.email || 'N/A';
+        document.getElementById('detail-contact').textContent = booking.contact || 'N/A';
+        document.getElementById('detail-details').textContent = booking.details || 'None';
+
+        document.getElementById('booking-details').style.display = 'block';
+      } catch (err) {
+        console.error('Tracking error:', err);
+        alert('Error fetching tracking info: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

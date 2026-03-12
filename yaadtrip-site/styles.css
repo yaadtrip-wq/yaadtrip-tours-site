@@ -1,0 +1,761 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #0f0f0f;
+  color: #fff;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Progress bar – global, but controlled */
+#progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 4px;
+  background: linear-gradient(to right, #ffd700, #e6c200);
+  z-index: 9999;
+  transition: width 0.2s ease;
+  display: none; /* hidden by default */
+}
+
+/* Show only on home/main page */
+body[data-page="home"] #progress-bar,
+body:not([data-page]) #progress-bar { /* fallback for index */
+  display: block;
+}
+
+@media (max-width: 768px) {
+  #progress-bar {
+    height: 3px; /* thinner on mobile to reduce glitch/overlap */
+  }
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+/* Header */
+header {
+  background: #000;
+  padding: 15px 0;
+  position: relative;
+  z-index: 10;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.logo {
+  max-height: 120px;
+}
+
+.header-tagline {
+  font-size: 1rem;
+  color: #ccc;
+  margin: 0;
+  text-align: right;
+  flex: 1;
+}
+
+.track-btn {
+  background: #ffd700;
+  color: #000;
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.track-btn:hover {
+  background: #e6c200;
+  transform: scale(1.05);
+}
+
+/* Hero / Booking Section */
+#booking-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 60px 0 100px;
+  text-align: center;
+}
+
+.hero-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  z-index: 0;
+}
+
+.video-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 1;
+}
+
+#booking-hero .container {
+  position: relative;
+  z-index: 2;
+}
+
+#booking-hero h2 {
+  font-size: 2.5rem;
+  color: #ffd700;
+  margin-bottom: 15px;
+}
+
+#booking-hero p {
+  font-size: 1.1rem;
+  color: #ddd;
+  margin-bottom: 30px;
+}
+
+/* ── Modern & Compact Booking Form ── */
+.booking-form {
+  background: rgba(30, 30, 30, 0.92);
+  padding: 28px 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  max-width: 720px;
+  margin: 0 auto 40px;
+  backdrop-filter: blur(8px);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+@media (min-width: 640px) {
+  .form-row {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  .form-group.full,
+  .vehicle-wrapper {
+    grid-column: 1 / -1;
+  }
+}
+
+.form-group {
+  position: relative;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #ffd700;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  height: 44px;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 10px;
+  color: #fff;
+  transition: all 0.25s ease;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #ffd700;
+  box-shadow: 0 0 0 3px rgba(255,215,0,0.2);
+  background: #282828;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  min-height: 80px;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 10px;
+  color: #fff;
+  resize: vertical;
+}
+
+/* Vehicle Selector */
+.vehicle-wrapper {
+  grid-column: 1 / -1;
+}
+
+.vehicle-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.vehicle-option {
+  flex: 1 1 120px;
+  max-width: 150px;
+  cursor: pointer;
+}
+
+.vehicle-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.option-content {
+  padding: 10px 8px;
+  border: 2px solid #444;
+  border-radius: 12px;
+  text-align: center;
+  transition: all 0.25s ease;
+  background: #1a1a1a;
+}
+
+.vehicle-option:hover .option-content,
+.vehicle-option input:checked + .option-content {
+  border-color: #ffd700;
+  background: rgba(255,215,0,0.08);
+  box-shadow: 0 0 15px rgba(255,215,0,0.3);
+}
+
+.vehicle-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 5px;
+  stroke: #ffd700;
+}
+
+.option-content span {
+  display: block;
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin-bottom: 3px;
+}
+
+.option-content small {
+  font-size: 0.78rem;
+  color: #aaa;
+}
+
+/* Price Estimate */
+.price-estimate {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ffd700;
+  margin: 18px 0;
+  padding: 10px;
+  background: rgba(255,215,0,0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(255,215,0,0.2);
+}
+
+/* PayPal / Loading */
+#paypal-button-container {
+  margin: 20px auto 0;
+  max-width: 340px;
+}
+
+#paypal-loading {
+  text-align: center;
+  color: #aaa;
+  font-size: 1rem;
+  margin: 12px 0;
+}
+
+/* Services & Contact – reduced padding */
+#services,
+#contact {
+  padding: 40px 0;  /* balanced – not too tight */
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 25px;
+}
+
+.service {
+  background: #1f1f1f;
+  padding: 25px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.service-img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+footer {
+  background: #000;
+  text-align: center;
+  padding: 20px;
+  font-size: 0.95rem;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  #booking-hero {
+    padding: 50px 0 80px;
+  }
+
+  #booking-hero h2 {
+    font-size: 2.2rem;
+  }
+
+  .booking-form {
+    padding: 20px 15px;
+  }
+
+  .form-row {
+    gap: 14px;
+  }
+
+  .vehicle-selector {
+    gap: 10px;
+  }
+
+  .vehicle-option {
+    flex: 1 1 45%;
+    max-width: none;
+  }
+
+  .header-container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .track-btn {
+    margin-top: 10px;
+  }
+
+  body {
+    padding: 0 10px;
+  }
+}
+
+/* Tracking & Thank-you page styles – improved spacing & mobile neatness */
+.tracking-form {
+  max-width: 550px;
+  margin: 40px auto 60px;
+  text-align: center;
+  padding: 0 15px;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 1.1rem;
+  margin: 15px 0 25px;
+  border: 1px solid #444;
+  border-radius: 10px;
+  background: #222;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+button {
+  padding: 16px 40px;
+  font-size: 1.15rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  min-width: 220px;
+  margin-top: 15px;
+  transition: all 0.3s;
+}
+
+button:hover {
+  background: #218838;
+  transform: translateY(-2px);
+}
+
+/* Status steps – much more spacious and neat on mobile */
+.status-steps {
+  display: flex;
+  flex-direction: column;      /* always stack on mobile */
+  align-items: center;
+  gap: 24px;                   /* generous space between cards */
+  margin: 40px 0 60px;
+  padding: 0 10px;
+}
+
+.status-step {
+  width: 100%;
+  max-width: 380px;
+  padding: 22px 25px;          /* more inner space */
+  background: #1f1f1f;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  border: 1px solid #333;
+  transition: transform 0.2s;
+}
+
+.status-step:hover {
+  transform: translateY(-5px);
+}
+
+.status-step h4 {
+  margin: 0 0 14px;
+  font-size: 1.3rem;
+  color: #ffd700;
+}
+
+.status-step p {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #ddd;
+}
+
+/* Booking details – better spacing */
+.booking-details {
+  max-width: 600px;
+  margin: 0 auto 60px;
+  padding: 30px 20px;
+  background: #1f1f1f;
+  border: 1px solid #444;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.booking-details dl {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px 20px;
+  margin: 0;
+}
+
+.booking-details dt {
+  font-weight: 600;
+  color: #ffd700;
+  text-align: right;
+  font-size: 1rem;
+}
+
+.booking-details dd {
+  margin: 0;
+  color: #ddd;
+  font-size: 1rem;
+}
+
+/* Mobile – extra spacing for neatness */
+@media (max-width: 768px) {
+  .tracking-form {
+    margin: 30px auto 50px;
+    padding: 0 12px;
+  }
+
+  .status-steps {
+    gap: 28px;                /* even bigger gaps on small screens */
+    margin: 30px 0 50px;
+  }
+
+  .status-step {
+    padding: 26px 20px;
+    max-width: 100%;
+  }
+
+  .status-step h4 {
+    font-size: 1.35rem;
+  }
+
+  .status-step p {
+    font-size: 1.1rem;
+  }
+
+  .booking-details {
+    padding: 25px 15px;
+    margin-bottom: 50px;
+  }
+
+  .booking-details dl {
+    grid-template-columns: 1fr;  /* stack label/value */
+    gap: 20px;
+  }
+
+  .booking-details dt {
+    text-align: left;
+    font-size: 1.05rem;
+  }
+
+  .booking-details dd {
+    font-size: 1.05rem;
+  }
+}
+
+/* Tracking page – spacious & neat mobile layout */
+.tracking-page-wrapper {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 40px 15px 80px;
+}
+
+.tracking-form {
+  margin-bottom: 60px;
+}
+
+.tracking-form input {
+  padding: 16px 18px;
+  font-size: 1.15rem;
+  margin: 20px 0 30px;
+}
+
+.tracking-form button {
+  padding: 18px 50px;
+  font-size: 1.2rem;
+  min-width: 240px;
+}
+
+/* Status steps – more space & bigger cards */
+.status-steps {
+  flex-direction: column !important; /* always stack on mobile */
+  gap: 28px !important;
+  margin: 50px 0 70px !important;
+}
+
+.status-step {
+  padding: 28px 25px !important;
+  max-width: 100% !important;
+  border-radius: 14px !important;
+}
+
+.status-step h4 {
+  font-size: 1.4rem !important;
+  margin-bottom: 16px !important;
+}
+
+.status-step p {
+  font-size: 1.1rem !important;
+  margin: 0 !important;
+}
+
+/* Booking details – better spacing */
+.booking-details {
+  padding: 35px 25px !important;
+  margin: 0 auto 80px !important;
+  border-radius: 14px !important;
+}
+
+.booking-details dl {
+  gap: 20px 25px !important;
+}
+
+.booking-details dt {
+  font-size: 1.1rem !important;
+}
+
+.booking-details dd {
+  font-size: 1.1rem !important;
+}
+
+/* Mobile – extra breathing room */
+@media (max-width: 768px) {
+  .tracking-page-wrapper {
+    padding: 30px 12px 60px;
+  }
+
+  .status-steps {
+    gap: 32px;
+  }
+
+  .status-step {
+    padding: 30px 20px;
+  }
+
+  .booking-details {
+    padding: 25px 18px;
+  }
+}
+
+/* Tracking page – rounded status boxes, side-by-side on desktop */
+.status-steps {
+  display: flex;
+  flex-wrap: wrap;           /* side-by-side on larger screens */
+  justify-content: center;
+  gap: 20px;                 /* space between boxes */
+  margin: 50px 0 70px;
+  padding: 0 10px;
+}
+
+.status-step {
+  flex: 1 1 220px;           /* grow/shrink, min width for side-by-side */
+  max-width: 280px;          /* not too wide */
+  padding: 24px 20px;        /* generous inner space */
+  background: #1f1f1f;
+  border-radius: 20px;       /* rounder edges */
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+  border: 1px solid #333;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.status-step:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 24px rgba(255, 215, 0, 0.15);
+}
+
+.status-step h4 {
+  margin: 0 0 14px;
+  font-size: 1.35rem;
+  color: #ffd700;
+}
+
+.status-step p {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #ddd;
+}
+
+/* Mobile – stack vertically with more space */
+@media (max-width: 768px) {
+  .status-steps {
+    flex-direction: column;
+    gap: 28px;               /* bigger gaps on small screens */
+    margin: 40px 0 60px;
+  }
+
+  .status-step {
+    max-width: 100%;
+    padding: 28px 24px;      /* even more inner space */
+  }
+
+  .status-step h4 {
+    font-size: 1.4rem;
+  }
+
+  .status-step p {
+    font-size: 1.1rem;
+  }
+}
+
+/* Tracking page – small rounded boxes, ALWAYS side-by-side (no stacking) */
+.status-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px 20px;               /* horizontal & vertical spacing between boxes */
+  margin: 40px 0 60px;
+  padding: 0 10px;
+}
+
+.status-step {
+  flex: 1 1 180px;              /* small base width – grows if space, but stays compact */
+  max-width: 220px;             /* never gets too big */
+  padding: 18px 16px;           /* compact inner space */
+  background: #1f1f1f;
+  border-radius: 20px;          /* nice round edges */
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  border: 1px solid #333;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.status-step:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(255, 215, 0, 0.15);
+}
+
+.status-step h4 {
+  margin: 0 0 10px;
+  font-size: 1.15rem;           /* smaller title */
+  color: #ffd700;
+}
+
+.status-step p {
+  margin: 0;
+  font-size: 0.95rem;           /* smaller text for neatness */
+  color: #ddd;
+}
+
+/* Mobile – keep side-by-side, just tighter if needed */
+@media (max-width: 768px) {
+  .status-steps {
+    gap: 14px 16px;             /* slightly less space on very small screens */
+    margin: 30px 0 50px;
+  }
+
+  .status-step {
+    flex: 1 1 140px;            /* even smaller base on phones */
+    max-width: 180px;
+    padding: 16px 14px;
+  }
+
+  .status-step h4 {
+    font-size: 1.1rem;
+  }
+
+  .status-step p {
+    font-size: 0.9rem;
+  }
+}
+
+/* Single status box – replaces content when status changes */
+#current-status {
+  width: 100%;
+  max-width: 420px;
+  margin: 30px auto;
+  padding: 22px 20px;
+  background: #1f1f1f;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  border: 1px solid #333;
+  transition: all 0.4s ease;
+}
+
+#current-status h4 {
+  margin: 0 0 12px;
+  font-size: 1.3rem;
+  color: #ffd700;
+}
+
+#current-status p {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #ddd;
+}
+
+/* Mobile – keep it compact & centered */
+@media (max-width: 768px) {
+  #current-status {
+    padding: 20px 18px;
+    margin: 25px auto;
+  }
+
+  #current-status h4 {
+    font-size: 1.25rem;
+  }
+
+  #current-status p {
+    font-size: 1rem;
+  }
+}
