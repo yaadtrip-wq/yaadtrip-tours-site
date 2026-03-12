@@ -1,6 +1,5 @@
 // functions/send-email.js
 export default async function handler(request, env, ctx) {
-  // Only allow POST from your site
   if (request.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });
   }
@@ -9,16 +8,11 @@ export default async function handler(request, env, ctx) {
     const body = await request.json();
     const { to, subject, html } = body;
 
-    // Basic validation
-    if (!to || !Array.isArray(to) || to.length === 0 || !subject || !html) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (!to || !subject || !html) {
+      return new Response(JSON.stringify({ error: 'Missing fields' }), { status: 400 });
     }
 
-    // Send via Resend
-    const resendRes = await fetch('https://api.resend.com/emails', {
+    const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${env.RESEND_API_KEY}`,
@@ -32,25 +26,17 @@ export default async function handler(request, env, ctx) {
       }),
     });
 
-    const result = await resendRes.json();
-
-    if (!resendRes.ok) {
-      console.error('Resend failed:', result);
-      return new Response(JSON.stringify({ error: result.message || 'Email send failed' }), {
-        status: resendRes.status,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (!response.ok) {
+      const err = await response.text();
+      console.error('Resend error:', err);
+      return new Response(JSON.stringify({ error: 'Email send failed' }), { status: 500 });
     }
 
-    return new Response(JSON.stringify({ success: true, id: result.id }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (err) {
-    console.error('Worker error:', err);
+    console.error('Function error:', err);
     return new Response(JSON.stringify({ error: 'Internal error' }), { status: 500 });
   }
 }
 
-// Required for edge runtime
 export const config = { runtime: 'edge' };

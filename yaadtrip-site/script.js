@@ -10,9 +10,6 @@ console.log("script.js loaded successfully");
 const SUPABASE_URL = 'https://pvbdoecrqwthalqqfqnh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_MdqPiFAIUfPJGn9_a1hpjA_O03v6gt4';
 
-// Resend API key – get yours from https://resend.com/dashboard/api-keys
-const RESEND_API_KEY = 're_6aeh4LA2_8BmLc6y4R3KkNvY2VBrDM2VhE'; // ← REPLACE THIS
-
 let currentTotalPrice = 0;
 let paypalRendered = false;
 let paypalContainer = null;
@@ -103,7 +100,6 @@ function updatePrice() {
   estimateEl.textContent =
     `Estimated: $${currentTotalPrice} USD (${vehicle}, ${passengers} pax, ~${Math.round(distanceKm)} km)`;
 
-  // Check form completeness – includes email
   const isFormComplete = [
     document.getElementById('pickup').value.trim(),
     document.getElementById('dropoff').value.trim(),
@@ -131,7 +127,7 @@ function updatePrice() {
 }
 
 // ────────────────────────────────────────────────
-// RENDER PAYPAL BUTTONS (called only once)
+// RENDER PAYPAL BUTTONS
 // ────────────────────────────────────────────────
 function renderPayPalButtons() {
   console.log("Rendering PayPal buttons...");
@@ -195,84 +191,74 @@ function renderPayPalButtons() {
         }
         console.log("Booking saved to Supabase successfully");
 
-        // ── Send confirmation email via Resend ──
+        // ── Send confirmation email via Cloudflare Pages Function ──
         if (customerEmail && customerEmail.includes('@')) {
-          const resendEmailData = {
-            from: 'Yaadtrip Tours <support@yaadtriptours.com>',
-            to: [customerEmail],
-            subject: `Yaadtrip Tours Booking Confirmation - ${trackingCode}`,
-            html: `
-              <h2>Hi ${formData.name},</h2>
-              <p>Thank you for booking with Yaadtrip Tours!</p>
-              <h3>Your Booking Details</h3>
-              <ul>
-                <li><strong>Tracking Code:</strong> ${trackingCode}</li>
-                <li><strong>Amount:</strong> $${currentTotalPrice.toFixed(2)} USD</li>
-                <li><strong>Transaction ID:</strong> ${transactionId || 'N/A'}</li>
-                <li><strong>Pickup:</strong> ${formData.pickup}</li>
-                <li><strong>Drop-off:</strong> ${formData.dropoff}</li>
-                <li><strong>Date & Time:</strong> ${new Date(formData.datetime).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}</li>
-                <li><strong>Passengers:</strong> ${formData.passengers}</li>
-                <li><strong>Vehicle:</strong> ${formData.vehicle.charAt(0).toUpperCase() + formData.vehicle.slice(1)}</li>
-                <li><strong>Service:</strong> ${formData.service}</li>
-                <li><strong>Contact:</strong> ${formData.contact}</li>
-                <li><strong>Email:</strong> ${customerEmail}</li>
-                <li><strong>Additional Details:</strong> ${formData.details || 'None'}</li>
-              </ul>
-              <p>We’ll contact you soon to confirm everything. Safe travels!</p>
-              <p>Best regards,<br>Yaadtrip Tours Support<br>support@yaadtriptours.com</p>
-            `
-          };
+          console.log("Sending email to customer:", customerEmail);
 
-          console.log("Sending Resend confirmation to:", customerEmail);
-
-          const resendRes = await fetch('https://api.resend.com/emails', {
+          const response = await fetch('/functions/send-email', {
             method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${RESEND_API_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(resendEmailData)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: [customerEmail],
+              subject: `Yaadtrip Tours Booking Confirmation - ${trackingCode}`,
+              html: `
+                <h2>Hi ${formData.name},</h2>
+                <p>Thank you for booking with Yaadtrip Tours!</p>
+                <h3>Your Booking Details</h3>
+                <ul>
+                  <li><strong>Tracking Code:</strong> ${trackingCode}</li>
+                  <li><strong>Amount:</strong> $${currentTotalPrice.toFixed(2)} USD</li>
+                  <li><strong>Transaction ID:</strong> ${transactionId || 'N/A'}</li>
+                  <li><strong>Pickup:</strong> ${formData.pickup}</li>
+                  <li><strong>Drop-off:</strong> ${formData.dropoff}</li>
+                  <li><strong>Date & Time:</strong> ${new Date(formData.datetime).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}</li>
+                  <li><strong>Passengers:</strong> ${formData.passengers}</li>
+                  <li><strong>Vehicle:</strong> ${formData.vehicle.charAt(0).toUpperCase() + formData.vehicle.slice(1)}</li>
+                  <li><strong>Service:</strong> ${formData.service}</li>
+                  <li><strong>Contact:</strong> ${formData.contact}</li>
+                  <li><strong>Email:</strong> ${customerEmail}</li>
+                  <li><strong>Additional Details:</strong> ${formData.details || 'None'}</li>
+                </ul>
+                <p>We’ll contact you soon to confirm everything. Safe travels!</p>
+                <p>Best regards,<br>Yaadtrip Tours Support<br>support@yaadtriptours.com</p>
+              `
+            })
           });
 
-          if (!resendRes.ok) {
-            const errText = await resendRes.text();
-            console.error("Resend customer email failed:", errText);
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Cloudflare function failed:", errorText);
           } else {
-            console.log("Customer email sent via Resend successfully");
+            console.log("Customer email queued successfully via Cloudflare");
           }
         } else {
-          console.warn("No valid customer email provided – skipping customer send");
+          console.warn("No valid customer email – skipping customer send");
         }
 
         // Always send copy to support
-        const supportEmailData = {
-          from: 'Yaadtrip Tours <support@yaadtriptours.com>',
-          to: ['support@yaadtriptours.com'],
-          subject: `New Booking Received - ${trackingCode}`,
-          html: `
-            <h2>New Booking</h2>
-            <p><strong>Customer:</strong> ${formData.name} (${customerEmail || 'Not provided'})</p>
-            <p><strong>Tracking Code:</strong> ${trackingCode}</p>
-            <p><strong>Amount:</strong> $${currentTotalPrice.toFixed(2)} USD</p>
-            <p><strong>Pickup:</strong> ${formData.pickup}</p>
-            <p><strong>Drop-off:</strong> ${formData.dropoff}</p>
-            <!-- Add more if needed -->
-          `
-        };
-
-        await fetch('https://api.resend.com/emails', {
+        const supportResponse = await fetch('/functions/send-email', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(supportEmailData)
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: ['support@yaadtriptours.com'],
+            subject: `New Booking Received - ${trackingCode}`,
+            html: `
+              <h2>New Booking</h2>
+              <p><strong>Customer:</strong> ${formData.name} (${customerEmail || 'Not provided'})</p>
+              <p><strong>Tracking Code:</strong> ${trackingCode}</p>
+              <p><strong>Amount:</strong> $${currentTotalPrice.toFixed(2)} USD</p>
+              <p><strong>Pickup:</strong> ${formData.pickup}</p>
+              <p><strong>Drop-off:</strong> ${formData.dropoff}</p>
+            `
+          })
         }).catch(err => console.error("Support copy failed:", err));
+
+        if (supportResponse?.ok) {
+          console.log("Support copy sent");
+        }
 
         localStorage.setItem('trackingCode', trackingCode);
 
-        // Immediate redirect – no popup
         window.location.href = '/thank-you.html';
 
       } catch (err) {
