@@ -10,6 +10,9 @@ console.log("script.js loaded successfully");
 const SUPABASE_URL = 'https://pvbdoecrqwthalqqfqnh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_MdqPiFAIUfPJGn9_a1hpjA_O03v6gt4';
 
+// MailerSend API token – get yours from https://app.mailersend.com/domains → API Tokens
+const MAILERSEND_API_TOKEN = 'mlsn.ae98bfc1c451c2ff24fe487f57a6eacd5ec5606cb144d64045948cba55a78121'; // ← REPLACE THIS
+
 let currentTotalPrice = 0;
 let paypalRendered = false;
 let paypalContainer = null;
@@ -191,71 +194,85 @@ function renderPayPalButtons() {
         }
         console.log("Booking saved to Supabase successfully");
 
-        // ── Send confirmation email via Cloudflare Pages Function ──
+        // ── Send confirmation email via MailerSend ──
         if (customerEmail && customerEmail.includes('@')) {
-          console.log("Sending email to customer:", customerEmail);
+          console.log("Sending MailerSend confirmation to:", customerEmail);
 
-          const response = await fetch('/functions/send-email', {
+          const mailerSendData = {
+            from: {
+              email: "support@yaadtriptours.com",
+              name: "Yaadtrip Tours"
+            },
+            to: [{ email: customerEmail }],
+            subject: `Yaadtrip Tours Booking Confirmation - ${trackingCode}`,
+            html: `
+              <h2>Hi ${formData.name},</h2>
+              <p>Thank you for booking with Yaadtrip Tours!</p>
+              <h3>Your Booking Details</h3>
+              <ul>
+                <li><strong>Tracking Code:</strong> ${trackingCode}</li>
+                <li><strong>Amount:</strong> $${currentTotalPrice.toFixed(2)} USD</li>
+                <li><strong>Transaction ID:</strong> ${transactionId || 'N/A'}</li>
+                <li><strong>Pickup:</strong> ${formData.pickup}</li>
+                <li><strong>Drop-off:</strong> ${formData.dropoff}</li>
+                <li><strong>Date & Time:</strong> ${new Date(formData.datetime).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}</li>
+                <li><strong>Passengers:</strong> ${formData.passengers}</li>
+                <li><strong>Vehicle:</strong> ${formData.vehicle.charAt(0).toUpperCase() + formData.vehicle.slice(1)}</li>
+                <li><strong>Service:</strong> ${formData.service}</li>
+                <li><strong>Contact:</strong> ${formData.contact}</li>
+                <li><strong>Email:</strong> ${customerEmail}</li>
+                <li><strong>Additional Details:</strong> ${formData.details || 'None'}</li>
+              </ul>
+              <p>We’ll contact you soon to confirm everything. Safe travels!</p>
+              <p>Best regards,<br>Yaadtrip Tours Support<br>support@yaadtriptours.com</p>
+            `
+          };
+
+          const mailerRes = await fetch('https://api.mailersend.com/v1/email', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              to: [customerEmail],
-              subject: `Yaadtrip Tours Booking Confirmation - ${trackingCode}`,
-              html: `
-                <h2>Hi ${formData.name},</h2>
-                <p>Thank you for booking with Yaadtrip Tours!</p>
-                <h3>Your Booking Details</h3>
-                <ul>
-                  <li><strong>Tracking Code:</strong> ${trackingCode}</li>
-                  <li><strong>Amount:</strong> $${currentTotalPrice.toFixed(2)} USD</li>
-                  <li><strong>Transaction ID:</strong> ${transactionId || 'N/A'}</li>
-                  <li><strong>Pickup:</strong> ${formData.pickup}</li>
-                  <li><strong>Drop-off:</strong> ${formData.dropoff}</li>
-                  <li><strong>Date & Time:</strong> ${new Date(formData.datetime).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}</li>
-                  <li><strong>Passengers:</strong> ${formData.passengers}</li>
-                  <li><strong>Vehicle:</strong> ${formData.vehicle.charAt(0).toUpperCase() + formData.vehicle.slice(1)}</li>
-                  <li><strong>Service:</strong> ${formData.service}</li>
-                  <li><strong>Contact:</strong> ${formData.contact}</li>
-                  <li><strong>Email:</strong> ${customerEmail}</li>
-                  <li><strong>Additional Details:</strong> ${formData.details || 'None'}</li>
-                </ul>
-                <p>We’ll contact you soon to confirm everything. Safe travels!</p>
-                <p>Best regards,<br>Yaadtrip Tours Support<br>support@yaadtriptours.com</p>
-              `
-            })
+            headers: {
+              'Authorization': `Bearer ${MAILERSEND_API_TOKEN}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(mailerSendData)
           });
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Cloudflare function failed:", errorText);
+          if (!mailerRes.ok) {
+            const errText = await mailerRes.text();
+            console.error("MailerSend customer email failed:", errText);
           } else {
-            console.log("Customer email queued successfully via Cloudflare");
+            console.log("Customer email sent via MailerSend successfully");
           }
         } else {
           console.warn("No valid customer email – skipping customer send");
         }
 
         // Always send copy to support
-        const supportResponse = await fetch('/functions/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: ['support@yaadtriptours.com'],
-            subject: `New Booking Received - ${trackingCode}`,
-            html: `
-              <h2>New Booking</h2>
-              <p><strong>Customer:</strong> ${formData.name} (${customerEmail || 'Not provided'})</p>
-              <p><strong>Tracking Code:</strong> ${trackingCode}</p>
-              <p><strong>Amount:</strong> $${currentTotalPrice.toFixed(2)} USD</p>
-              <p><strong>Pickup:</strong> ${formData.pickup}</p>
-              <p><strong>Drop-off:</strong> ${formData.dropoff}</p>
-            `
-          })
-        }).catch(err => console.error("Support copy failed:", err));
+        const supportMailerData = {
+          from: {
+            email: "support@yaadtriptours.com",
+            name: "Yaadtrip Tours"
+          },
+          to: [{ email: "support@yaadtriptours.com" }],
+          subject: `New Booking Received - ${trackingCode}`,
+          html: `
+            <h2>New Booking</h2>
+            <p><strong>Customer:</strong> ${formData.name} (${customerEmail || 'Not provided'})</p>
+            <p><strong>Tracking Code:</strong> ${trackingCode}</p>
+            <p><strong>Amount:</strong> $${currentTotalPrice.toFixed(2)} USD</p>
+            <p><strong>Pickup:</strong> ${formData.pickup}</p>
+            <p><strong>Drop-off:</strong> ${formData.dropoff}</p>
+          `
+        };
 
-        if (supportResponse?.ok) {
-          console.log("Support copy sent");
-        }
+        await fetch('https://api.mailersend.com/v1/email', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${MAILERSEND_API_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(supportMailerData)
+        }).catch(err => console.error("Support copy failed:", err));
 
         localStorage.setItem('trackingCode', trackingCode);
 
