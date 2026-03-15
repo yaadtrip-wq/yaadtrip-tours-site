@@ -10,8 +10,8 @@ console.log("script.js loaded successfully");
 const SUPABASE_URL = 'https://pvbdoecrqwthalqqfqnh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_MdqPiFAIUfPJGn9_a1hpjA_O03v6gt4';
 
-// MailerSend API token – get yours from https://app.mailersend.com/domains → API Tokens
-const MAILERSEND_API_TOKEN = 'mlsn.ae98bfc1c451c2ff24fe487f57a6eacd5ec5606cb144d64045948cba55a78121'; // ← REPLACE THIS
+// MailerSend API token – already set with your provided value
+const MAILERSEND_API_TOKEN = 'mlsn.ae98bfc1c451c2ff24fe487f57a6eacd5ec5606cb144d64045948cba55a78121';
 
 let currentTotalPrice = 0;
 let paypalRendered = false;

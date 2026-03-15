@@ -15,15 +15,18 @@ export default async function handler(request, env) {
       });
     }
 
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetch('https://api.mailersend.com/v1/email', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+        'Authorization': `Bearer ${env.MAILERSEND_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Yaadtrip Tours <support@yaadtriptours.com>',
-        to,
+        from: {
+          email: 'support@yaadtriptours.com',
+          name: 'Yaadtrip Tours'
+        },
+        to: to.map(email => ({ email })),
         subject,
         html,
       }),
@@ -32,7 +35,7 @@ export default async function handler(request, env) {
     const result = await response.json();
 
     if (!response.ok) {
-      console.error('Resend error:', result);
+      console.error('MailerSend error:', result);
       return new Response(JSON.stringify({ error: result.message || 'Failed to send' }), {
         status: response.status,
         headers: { 'Content-Type': 'application/json' },
